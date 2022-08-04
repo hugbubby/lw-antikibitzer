@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LessWrong 2.0 Anti-Kibitzer
 // @namespace    mherreshoff
-// @version      0.1
+// @version      0.2
 // @description  Hides usernames and scores on LessWrong.
 // @author       Marello Herreshoff
 // @match        *://www.lesswrong.com/*
@@ -15,13 +15,11 @@ var censorship_on = true; // We start with censorship turned on (the user can't 
 
 function colorful_censor_bar(name) {
     if (!(name in colorful_censor_bar.cache)) {
-        var t = '_'.repeat(4 + Math.floor(26*Math.random()));
-            // Some filler text so the bars have different lengths.
         var r = 255*Math.random();
         var g = 255*Math.random();
         var b = 255*Math.random();
         var c = `rgb(${r},${g},${b})` // A random color for the censor bar.
-        var s = `<div style="background:${c};color:${c}">${t}</div>`;
+        var s = `<span style="color:${c}">[Redacted]</span>`;
         colorful_censor_bar.cache[name] = s;
     }
     return colorful_censor_bar.cache[name];
@@ -29,7 +27,7 @@ function colorful_censor_bar(name) {
 colorful_censor_bar.cache = {}
 
 
-function vote_censor_bar(votes) { return '<span style="color:black">█</span>'; }
+function vote_censor_bar(_) { return '<span style="color:black">#</span>'; }
 
 function notification_censor_bar(content) {
   var m = content.match(/^(.*)( has created .*)$/);
@@ -40,7 +38,7 @@ function notification_censor_bar(content) {
 
 function censorship_sweep() {
     function update_censor_text(selector, f, might_change) {
-        $(selector).each((idx, elem) => {
+        $(selector).each((_, elem) => {
             var data = $(elem).data("censor");
             var detected = $(elem).html();
             if (!data) {
@@ -56,8 +54,12 @@ function censorship_sweep() {
     update_censor_text(".UsersNameDisplay-userName", colorful_censor_bar, false);
     update_censor_text(".NotificationsItem-notificationLabel", notification_censor_bar, false);
     update_censor_text(".PostsVote-voteScore", vote_censor_bar, true);
+    update_censor_text(".OverallVoteAxis-voteScore", vote_censor_bar, true);
+    update_censor_text(".AgreementVoteAxis-voteScore", vote_censor_bar, true);
     update_censor_text(".CommentsVote-voteScore", vote_censor_bar, true);
     update_censor_text(".PostsItem2-karma", vote_censor_bar, true);
+    update_censor_text(".PostsItemMeta-karma", vote_censor_bar, true);
+    update_censor_text(".SingleLineComment-karma", vote_censor_bar, true);
 }
 
 var censorship_sweeper = setInterval(censorship_sweep, 100);
